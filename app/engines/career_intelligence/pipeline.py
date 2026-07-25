@@ -12,6 +12,19 @@ from app.engines.matching.skill_extractor import extract_skills
 from app.parsers.job_parser import extract_job_skills
 from app.engines.matching.match_engine import calculate_match
 
+# ATS
+from app.engines.ats.ats_engine import analyze_resume
+
+# Recommendation
+from app.engines.career_intelligence.recommendation_engine import (
+    RecommendationEngine
+)
+
+# Report Generator (سنستخدمه لاحقًا)
+from app.engines.career_intelligence.report_generator import (
+    ReportGenerator
+)
+
 
 # ==========================================================
 # Career Pipeline
@@ -25,18 +38,32 @@ class CareerPipeline:
     def __init__(self):
 
         # -----------------------------------------
-        # Register all engines
+        # Core Engines
         # -----------------------------------------
 
         self.skill_extractor = extract_skills
+
         self.job_parser = extract_job_skills
+
         self.match_engine = calculate_match
 
-        # These will be connected later
+        # -----------------------------------------
+        # ATS Engine
+        # -----------------------------------------
 
-        self.ats_engine = None
-        self.recommendation_engine = None
-        self.report_generator = None
+        self.ats_engine = analyze_resume
+
+        # -----------------------------------------
+        # Recommendation Engine
+        # -----------------------------------------
+
+        self.recommendation_engine = RecommendationEngine()
+
+        # -----------------------------------------
+        # Report Generator
+        # -----------------------------------------
+
+        self.report_generator = ReportGenerator()
 
     # ======================================================
     # Run Complete Pipeline
@@ -94,25 +121,29 @@ class CareerPipeline:
 
         # ==================================================
         # STEP 4
-        # ATS
+        # ATS Engine
         # ==================================================
 
         print("\n[4] ATS Engine")
 
-        ats_result = None
+        ats_result = self.ats_engine(
+            cv_text
+        )
 
-        print("ATS Engine not connected yet.")
+        print("ATS Analysis Finished")
 
         # ==================================================
         # STEP 5
-        # Recommendation
+        # Recommendation Engine
         # ==================================================
 
         print("\n[5] Recommendation Engine")
 
-        recommendations = None
+        recommendations = self.recommendation_engine.generate(
+            missing_skills
+        )
 
-        print("Recommendation Engine not connected yet.")
+        print("Recommendation Finished")
 
         # ==================================================
         # STEP 6
@@ -139,6 +170,6 @@ class CareerPipeline:
 
         }
 
-        print("Pipeline Finished Successfully")
+        print("\nPipeline Finished Successfully")
 
         return report

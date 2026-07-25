@@ -1,5 +1,3 @@
-from app.parsers.pdf_reader import extract_text_from_pdf
-
 from app.engines.ats.section.resume_cleaner import clean_resume
 from app.engines.ats.section.section_parser import parse_resume_sections
 
@@ -28,112 +26,141 @@ from app.engines.ats.report.report_builder import build_report
 # ATS ENGINE
 # ==========================================================
 
-def analyze_resume(pdf_path: str):
+def analyze_resume(resume_text: str):
+    """
+    Analyze resume text and generate a complete ATS report.
+
+    Parameters
+    ----------
+    resume_text : str
+        Extracted text from the resume PDF.
+
+    Returns
+    -------
+    dict
+        Complete ATS report.
+    """
+
+    print("\n========== ATS ENGINE ==========")
 
     # ------------------------------------------------------
-    # Read Resume
+    # Step 1 - Clean Resume
     # ------------------------------------------------------
 
-    resume_text = extract_text_from_pdf(pdf_path)
-
-    # ------------------------------------------------------
-    # Clean Resume
-    # ------------------------------------------------------
+    print("\n[ATS] Cleaning Resume...")
 
     cleaned = clean_resume(resume_text)
 
+    print("Resume cleaned successfully.")
+
     # ------------------------------------------------------
-    # Parse Sections
+    # Step 2 - Parse Sections
     # ------------------------------------------------------
+
+    print("\n[ATS] Parsing Resume Sections...")
 
     sections = parse_resume_sections(
         cleaned["clean_text"]
     )
 
+    print("Sections detected:")
+    print(list(sections.keys()))
+
     # ------------------------------------------------------
-    # Skills
+    # Step 3 - Skills
     # ------------------------------------------------------
+
+    print("\n[ATS] Analyzing Skills...")
 
     skills = extract_skills_from_text(
         sections.get("skills", "")
     )
 
+    print(f"Skills Found: {len(skills)}")
+
     # ------------------------------------------------------
-    # Experience
+    # Step 4 - Experience
     # ------------------------------------------------------
+
+    print("\n[ATS] Analyzing Experience...")
 
     experience = analyze_experience(
         sections.get("experience", "")
     )
 
+    print("Experience analysis completed.")
+
     # ------------------------------------------------------
-    # Projects
+    # Step 5 - Projects
     # ------------------------------------------------------
+
+    print("\n[ATS] Analyzing Projects...")
 
     projects = score_projects(
         sections.get("projects", "")
     )
 
+    print("Projects analysis completed.")
+
     # ------------------------------------------------------
-    # Certifications
+    # Step 6 - Certifications
     # ------------------------------------------------------
+
+    print("\n[ATS] Analyzing Certifications...")
 
     certifications = analyze_certifications(
         sections.get("certifications", "")
     )
 
+    print("Certification analysis completed.")
+
     # ------------------------------------------------------
-    # Scores
+    # Step 7 - Scores
     # ------------------------------------------------------
+
+    print("\n[ATS] Calculating Scores...")
 
     scores = build_scores(
-
         skills,
-
         experience,
-
         projects,
-
         certifications
-
     )
 
+    print("Overall ATS Score:", scores["overall_score"])
+
     # ------------------------------------------------------
-    # Summary
+    # Step 8 - Summary
     # ------------------------------------------------------
+
+    print("\n[ATS] Building Summary...")
 
     summary = build_summary(
-
         scores,
-
         skills,
-
         experience,
-
         projects,
-
         certifications
-
     )
 
+    print("Summary generated.")
+
     # ------------------------------------------------------
-    # Final Report
+    # Step 9 - Final Report
     # ------------------------------------------------------
 
-    return build_report(
+    print("\n[ATS] Building Final Report...")
 
+    report = build_report(
         sections,
-
         skills,
-
         experience,
-
         projects,
-
         certifications,
-
         scores,
-
         summary
-
     )
+
+    print("ATS Engine Finished Successfully.")
+
+    return report
