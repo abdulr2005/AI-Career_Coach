@@ -1,3 +1,7 @@
+# ==========================================================
+# SUMMARY BUILDER
+# ==========================================================
+
 def build_summary(
     scores,
     skills,
@@ -12,9 +16,9 @@ def build_summary(
 
     recommendations = []
 
-    # -------------------------
+    # ------------------------------------------------------
     # Skills
-    # -------------------------
+    # ------------------------------------------------------
 
     if len(skills) >= 10:
 
@@ -32,11 +36,11 @@ def build_summary(
             "Add more job-related technical skills."
         )
 
-    # -------------------------
+    # ------------------------------------------------------
     # Projects
-    # -------------------------
+    # ------------------------------------------------------
 
-    if projects["average_score"] >= 8:
+    if projects.get("average_score", 0) >= 8:
 
         strengths.append(
             "High-quality projects with measurable impact."
@@ -48,11 +52,13 @@ def build_summary(
             "Improve project descriptions using metrics."
         )
 
-    # -------------------------
+    # ------------------------------------------------------
     # Experience
-    # -------------------------
+    # ------------------------------------------------------
 
-    if experience["count"] == 0:
+    experience_score = experience.get("score", 0)
+
+    if experience_score == 0:
 
         weaknesses.append(
             "No work experience detected."
@@ -62,15 +68,25 @@ def build_summary(
             "Add internships, volunteering or freelance work."
         )
 
-    # -------------------------
-    # Certifications
-    # -------------------------
+    elif experience_score >= 7:
 
-    if certifications["count"] == 0:
+        strengths.append(
+            "Strong professional experience."
+        )
+
+    # ------------------------------------------------------
+    # Certifications
+    # ------------------------------------------------------
+
+    if certifications.get("count", 0) == 0:
 
         recommendations.append(
             "Consider adding professional certifications."
         )
+
+    # ------------------------------------------------------
+    # Final Summary
+    # ------------------------------------------------------
 
     return {
 
