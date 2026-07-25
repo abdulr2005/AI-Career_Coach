@@ -1,4 +1,4 @@
-from app.engines.ats.analyzers.project_features import (
+from app.engines.ats.analyzers.projects.project_features import (
     extract_action_verbs,
     extract_impact,
     extract_metrics,
@@ -7,7 +7,7 @@ from app.engines.ats.analyzers.project_features import (
     detect_links
 )
 
-from app.engines.ats.analyzers.skill_extractor import (
+from app.engines.ats.analyzers.skills.skill_extractor import (
     extract_skills_from_text
 )
 
