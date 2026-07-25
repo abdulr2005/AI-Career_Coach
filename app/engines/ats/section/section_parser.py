@@ -26,9 +26,13 @@ def parse_resume_sections(text: str):
 
     for line in lines:
 
+        print(f"Checking Line: {line}")
+
         section = match_section(line)
 
         if section:
+
+            print(f"Matched Section -> {section}")
 
             current_section = section
 
