@@ -5,32 +5,44 @@ import io
 from app.models.schemas import (
     JobRequest,
     AnalyzeResponse,
-    CareerReportResponse
+    CareerReportResponse,
 )
 
+# =========================================================
 # Matching
+# =========================================================
+
 from app.engines.matching.skill_extractor import extract_skills
 from app.engines.matching.match_engine import calculate_match
 
+# =========================================================
 # Parsers
+# =========================================================
+
 from app.parsers.job_parser import extract_job_skills
 
+# =========================================================
 # Recommendation
+# =========================================================
+
 from app.engines.recommendation.course_engine import recommend_courses
 from app.engines.recommendation.roadmap_engine import build_roadmap
 from app.engines.recommendation.suggestion_engine import generate_suggestions
 from app.engines.recommendation.resume_feedback import generate_resume_feedback
 
+# =========================================================
 # ATS
-from app.engines.ats.ats_engine import calculate_ats_score
+# =========================================================
+
+from app.engines.ats.ats_engine import analyze_resume
 
 
 router = APIRouter()
 
 
-# ==========================================
+# =========================================================
 # Root Endpoint
-# ==========================================
+# =========================================================
 
 @router.get("/")
 def home():
@@ -39,9 +51,9 @@ def home():
     }
 
 
-# ==========================================
+# =========================================================
 # Analyze Job Description
-# ==========================================
+# =========================================================
 
 @router.post(
     "/analyze",
@@ -58,15 +70,17 @@ def analyze_job(request: JobRequest):
     )
 
 
-# ==========================================
-# Helper: PDF Extractor
-# ==========================================
+# =========================================================
+# PDF Text Extraction
+# =========================================================
 
-def extract_text_from_pdf(file_bytes):
+def extract_text_from_pdf(file_bytes: bytes) -> str:
 
     pages = []
 
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+    with pdfplumber.open(
+        io.BytesIO(file_bytes)
+    ) as pdf:
 
         for page in pdf.pages:
 
@@ -78,9 +92,9 @@ def extract_text_from_pdf(file_bytes):
     return "\n".join(pages)
 
 
-# ==========================================
+# =========================================================
 # Full Career Report
-# ==========================================
+# =========================================================
 
 @router.post(
     "/career-report",
@@ -91,50 +105,96 @@ async def career_report(
     job_description: str = Form(...)
 ):
 
-    # Read PDF
+    # -----------------------------------------------------
+    # 1. Read PDF
+    # -----------------------------------------------------
+
     file_bytes = await file.read()
-    cv_text = extract_text_from_pdf(file_bytes)
 
-    # Extract Skills
-    cv_skills = extract_skills(cv_text)
-    job_skills = extract_job_skills(job_description)
+    cv_text = extract_text_from_pdf(
+        file_bytes
+    )
 
-    # Match Engine
+    if not cv_text.strip():
+        raise ValueError(
+            "Could not extract text from the uploaded PDF."
+        )
+
+    # -----------------------------------------------------
+    # 2. Extract CV Skills
+    # -----------------------------------------------------
+
+    cv_skills = extract_skills(
+        cv_text
+    )
+
+    # -----------------------------------------------------
+    # 3. Extract Job Skills
+    # -----------------------------------------------------
+
+    job_skills = extract_job_skills(
+        job_description
+    )
+
+    # -----------------------------------------------------
+    # 4. Match CV Against Job
+    # -----------------------------------------------------
+
     matched_skills, missing_skills, match_score = calculate_match(
         cv_skills,
         job_skills
     )
 
-    # ATS Engine
-    ats_result = calculate_ats_score(
-        match_score,
-        cv_text,
-        cv_skills,
-        job_skills
+    # -----------------------------------------------------
+    # 5. Full ATS Analysis
+    # -----------------------------------------------------
+
+    ats_result = analyze_resume(
+        cv_text
     )
+
+    # -----------------------------------------------------
+    # 6. Extract ATS Score
+    # -----------------------------------------------------
 
     ats_score = ats_result["ats_score"]
 
-    # Courses
+    # -----------------------------------------------------
+    # 7. Course Recommendations
+    # -----------------------------------------------------
+
     recommended_courses = recommend_courses(
         missing_skills
     )
 
-    # Roadmap
+    # -----------------------------------------------------
+    # 8. Career Roadmap
+    # -----------------------------------------------------
+
     roadmap = build_roadmap(
         missing_skills
     )
 
-    # Suggestions
+    # -----------------------------------------------------
+    # 9. Career Suggestions
+    # -----------------------------------------------------
+
     suggestions = generate_suggestions(
         missing_skills
     )
 
-    # Resume Feedback
+    # -----------------------------------------------------
+    # 10. Resume Feedback
+    # -----------------------------------------------------
+
     resume_feedback = generate_resume_feedback(
         matched_skills,
         missing_skills
     )
+
+    # -----------------------------------------------------
+    # 11. Final Response
+    # -----------------------------------------------------
 
     return CareerReportResponse(
 
@@ -159,5 +219,4 @@ async def career_report(
         suggestions=suggestions,
 
         resume_feedback=resume_feedback
-
     )

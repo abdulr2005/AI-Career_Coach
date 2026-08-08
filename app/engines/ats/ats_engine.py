@@ -25,142 +25,137 @@ from app.engines.ats.report.report_builder import build_report
 # ==========================================================
 # ATS ENGINE
 # ==========================================================
-
-def analyze_resume(resume_text: str):
+def analyze_resume(cv_skills, job_skills):
     """
-    Analyze resume text and generate a complete ATS report.
+    Analyze CV skills against job-required skills and generate
+    an ATS skill-matching result.
 
     Parameters
     ----------
-    resume_text : str
-        Extracted text from the resume PDF.
+    cv_skills : list
+        Skills extracted from the candidate's CV.
+
+    job_skills : list
+        Skills extracted from the job description.
 
     Returns
     -------
-    dict
-        Complete ATS report.
+    tuple
+        matched_skills : list
+            Skills found in both CV and job requirements.
+
+        missing_skills : list
+            Skills required by the job but missing from the CV.
+
+        match_score : float
+            Percentage of job-required skills matched by the CV.
     """
 
     print("\n========== ATS ENGINE ==========")
 
     # ------------------------------------------------------
-    # Step 1 - Clean Resume
+    # Step 1 - Validate Skills
     # ------------------------------------------------------
 
-    print("\n[ATS] Cleaning Resume...")
+    print("\n[ATS] Validating Skills...")
 
-    cleaned = clean_resume(resume_text)
+    if cv_skills is None:
+        cv_skills = []
 
-    print("Resume cleaned successfully.")
+    if job_skills is None:
+        job_skills = []
+
+    if isinstance(cv_skills, str):
+        cv_skills = [cv_skills]
+
+    if isinstance(job_skills, str):
+        job_skills = [job_skills]
+
+    print(f"CV Skills: {len(cv_skills)}")
+    print(f"Job Skills: {len(job_skills)}")
 
     # ------------------------------------------------------
-    # Step 2 - Parse Sections
+    # Step 2 - Normalize Skills
     # ------------------------------------------------------
 
-    print("\n[ATS] Parsing Resume Sections...")
+    print("\n[ATS] Normalizing Skills...")
 
-    sections = parse_resume_sections(
-        cleaned["clean_text"]
+    def normalize_skill(skill):
+        return " ".join(
+            str(skill)
+            .strip()
+            .lower()
+            .split()
+        )
+
+    cv_skill_map = {}
+
+    for skill in cv_skills:
+        normalized = normalize_skill(skill)
+
+        if normalized:
+            cv_skill_map[normalized] = skill
+
+    job_skill_map = {}
+
+    for skill in job_skills:
+        normalized = normalize_skill(skill)
+
+        if normalized:
+            job_skill_map[normalized] = skill
+
+    cv_normalized = set(cv_skill_map.keys())
+    job_normalized = set(job_skill_map.keys())
+
+    # ------------------------------------------------------
+    # Step 3 - Match Skills
+    # ------------------------------------------------------
+
+    print("\n[ATS] Matching Skills...")
+
+    matched_normalized = cv_normalized.intersection(job_normalized)
+
+    missing_normalized = job_normalized.difference(cv_normalized)
+
+    matched_skills = [
+        cv_skill_map[skill]
+        for skill in matched_normalized
+    ]
+
+    missing_skills = [
+        job_skill_map[skill]
+        for skill in missing_normalized
+    ]
+
+    print(f"Matched Skills: {len(matched_skills)}")
+    print(f"Missing Skills: {len(missing_skills)}")
+
+    # ------------------------------------------------------
+    # Step 4 - Calculate Match Score
+    # ------------------------------------------------------
+
+    print("\n[ATS] Calculating Match Score...")
+
+    if len(job_normalized) == 0:
+        match_score = 0.0
+    else:
+        match_score = (
+            len(matched_normalized)
+            / len(job_normalized)
+        ) * 100
+
+    match_score = round(match_score, 2)
+
+    print(f"Match Score: {match_score}%")
+
+    # ------------------------------------------------------
+    # Step 5 - Final Result
+    # ------------------------------------------------------
+
+    print("\n[ATS] ATS Engine Finished Successfully.")
+
+    return (
+        matched_skills,
+        missing_skills,
+        match_score
     )
-
-    print("Sections detected:")
-    print(list(sections.keys()))
-
-    # ------------------------------------------------------
-    # Step 3 - Skills
-    # ------------------------------------------------------
-
-    print("\n[ATS] Analyzing Skills...")
-
-    skills = extract_skills_from_text(
-        sections.get("skills", "")
-    )
-
-    print(f"Skills Found: {len(skills)}")
-
-    # ------------------------------------------------------
-    # Step 4 - Experience
-    # ------------------------------------------------------
-
-    print("\n[ATS] Analyzing Experience...")
-
-    experience = analyze_experience(
-        sections.get("experience", "")
-    )
-
-    print("Experience analysis completed.")
-
-    # ------------------------------------------------------
-    # Step 5 - Projects
-    # ------------------------------------------------------
-
-    print("\n[ATS] Analyzing Projects...")
-
-    projects = score_projects(
-        sections.get("projects", "")
-    )
-
-    print("Projects analysis completed.")
-
-    # ------------------------------------------------------
-    # Step 6 - Certifications
-    # ------------------------------------------------------
-
-    print("\n[ATS] Analyzing Certifications...")
-
-    certifications = analyze_certifications(
-        sections.get("certifications", "")
-    )
-
-    print("Certification analysis completed.")
-
-    # ------------------------------------------------------
-    # Step 7 - Scores
-    # ------------------------------------------------------
-
-    print("\n[ATS] Calculating Scores...")
-
-    scores = build_scores(
-        skills,
-        experience,
-        projects,
-        certifications
-    )
-
-    print("Overall ATS Score:", scores["overall_score"])
-
-    # ------------------------------------------------------
-    # Step 8 - Summary
-    # ------------------------------------------------------
-
-    print("\n[ATS] Building Summary...")
-
-    summary = build_summary(
-        scores,
-        skills,
-        experience,
-        projects,
-        certifications
-    )
-
-    print("Summary generated.")
-
-    # ------------------------------------------------------
-    # Step 9 - Final Report
-    # ------------------------------------------------------
-
-    print("\n[ATS] Building Final Report...")
-
-    report = build_report(
-        sections,
-        skills,
-        experience,
-        projects,
-        certifications,
-        scores,
-        summary
-    )
-
-    print("ATS Engine Finished Successfully.")
-
-    return report

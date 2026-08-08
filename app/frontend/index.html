@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Coach - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-compass"></i>
+                <span>Settings</span>
+            </div>
+            <div class="sidebar-content">
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="demoMode" checked>
+                        <span class="slider"></span>
+                        <span class="label">Use demo data</span>
+                    </label>
+                    <p class="help-text">Preview dashboard with sample results without calling a backend.</p>
+                </div>
+                <div class="form-group">
+                    <label for="apiUrl">Backend endpoint</label>
+                    <input type="text" id="apiUrl" value="http://localhost:8000/career-report" disabled>
+                    <p class="help-text">Your FastAPI /career-report endpoint.</p>
+                </div>
+                <hr>
+                <div class="how-it-works">
+                    <h3>How this works</h3>
+                    <p>Upload a CV and paste a job description, then click <strong>Analyze</strong>. The request is sent to your FastAPI backend, which returns a JSON report.</p>
+                </div>
+                <button id="clearResults" class="btn btn-secondary" style="display: none;">Clear Results</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <h1>AI Career Coach</h1>
+                <p class="subtitle">Your intelligent career analysis dashboard</p>
+            </header>
+
+            <section class="upload-section card">
+                <h2>Analyze a role</h2>
+                <div class="upload-grid">
+                    <div class="upload-col">
+                        <label for="cvFile">Upload your CV (PDF)</label>
+                        <div class="file-drop-area" id="dropArea">
+                            <i class="fas fa-file-pdf"></i>
+                            <span class="file-msg">Choose a file or drag it here</span>
+                            <input type="file" id="cvFile" accept=".pdf" class="file-input">
+                        </div>
+                        <div id="fileName" class="file-name"></div>
+                    </div>
+                    <div class="upload-col">
+                        <label for="jobDescription">Paste the job description</label>
+                        <textarea id="jobDescription" placeholder="Paste the full job posting here..." rows="8"></textarea>
+                    </div>
+                </div>
+                <button id="analyzeBtn" class="btn btn-primary">Analyze</button>
+            </section>
+
+            <div id="loader" class="loader-container" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing your fit for this role...</p>
+            </div>
+
+            <div id="errorMsg" class="error-container" style="display: none;"></div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="results-section" style="display: none;">
+                <section class="overview-section">
+                    <h3>Overview</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <span class="metric-label">Match score</span>
+                            <div class="metric-value" id="matchScoreVal">0%</div>
+                            <div class="progress-bar">
+                                <div id="matchScoreFill" class="progress-fill"></div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">ATS score</span>
+                            <div class="metric-value" id="atsScoreVal">0%</div>
+                            <div class="progress-bar">
+                                <div id="atsScoreFill" class="progress-fill"></div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Matched skills</span>
+                            <div class="metric-value" id="matchedSkillsCount">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Missing skills</span>
+                            <div class="metric-value" id="missingSkillsCount">0</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="skills-section">
+                    <h3>Skills</h3>
+                    <div class="skills-grid">
+                        <div class="skill-group">
+                            <label>Matched skills</label>
+                            <div id="matchedSkillsTags" class="tag-grid"></div>
+                        </div>
+                        <div class="skill-group">
+                            <label>Missing skills</label>
+                            <div id="missingSkillsTags" class="tag-grid"></div>
+                        </div>
+                    </div>
+                    <details class="skills-details">
+                        <summary>View all extracted skills</summary>
+                        <div class="details-grid">
+                            <div class="details-col">
+                                <h4>From your CV</h4>
+                                <ul id="cvSkillsList"></ul>
+                            </div>
+                            <div class="details-col">
+                                <h4>From the job description</h4>
+                                <ul id="jobSkillsList"></ul>
+                            </div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="insights-section">
+                    <h3>Insights</h3>
+                    <div class="tabs">
+                        <div class="tab-header">
+                            <button class="tab-btn active" data-tab="courses">Recommended courses</button>
+                            <button class="tab-btn" data-tab="roadmap">Career roadmap</button>
+                            <button class="tab-btn" data-tab="feedback">Resume feedback</button>
+                            <button class="tab-btn" data-tab="suggestions">Suggestions</button>
+                        </div>
+                        <div class="tab-content">
+                            <div id="courses" class="tab-pane active">
+                                <div id="coursesGrid" class="insights-grid"></div>
+                            </div>
+                            <div id="roadmap" class="tab-pane">
+                                <div id="roadmapList" class="roadmap-list"></div>
+                            </div>
+                            <div id="feedback" class="tab-pane">
+                                <ul id="feedbackList" class="insight-list"></ul>
+                            </div>
+                            <div id="suggestions" class="tab-pane">
+                                <ul id="suggestionsList" class="insight-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>No analysis yet. Upload a CV and a job description, then click <strong>Analyze</strong> to see your match score, skill gaps, and roadmap here.</p>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
