@@ -1,75 +1,7 @@
 import re
 
-# ==========================================================
-# TECHNICAL SKILLS DATABASE
-# ==========================================================
+from app.data.skills_db import ATS_SKILL_KEYWORDS
 
-SKILL_KEYWORDS = [
-
-    "python",
-    "sql",
-    "java",
-    "c++",
-    "javascript",
-
-    "tensorflow",
-    "pytorch",
-    "scikit-learn",
-    "opencv",
-
-    "machine learning",
-    "deep learning",
-    "computer vision",
-    "nlp",
-
-    "xgboost",
-    "random forest",
-    "pca",
-
-    "fastapi",
-    "flask",
-    "streamlit",
-
-    "docker",
-    "git",
-    "github",
-
-    "mysql",
-    "postgresql",
-    "mongodb",
-
-    "power bi",
-    "tableau",
-    "excel",
-
-    "aws",
-    "azure",
-
-    "iot",
-    "uml",
-
-    "react",
-    "node.js",
-
-    "linux",
-    "kubernetes",
-
-    "redis",
-
-    "rest api",
-
-    "api",
-
-    "firebase",
-
-    "azure devops"
-
-]
-
-
-# ==========================================================
-# WORD BOUNDARY SEARCH
-# ==========================================================
 
 def contains_skill(text, skill):
 
@@ -78,17 +10,13 @@ def contains_skill(text, skill):
     return re.search(pattern, text) is not None
 
 
-# ==========================================================
-# SKILL EXTRACTOR
-# ==========================================================
-
 def extract_skills_from_text(text):
 
     lower = text.lower()
 
     found = []
 
-    for skill in SKILL_KEYWORDS:
+    for skill in ATS_SKILL_KEYWORDS:
 
         if contains_skill(lower, skill):
 

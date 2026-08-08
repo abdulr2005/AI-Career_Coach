@@ -4,6 +4,8 @@ Career Intelligence Pipeline
 This module orchestrates the complete AI Career Coach workflow.
 """
 
+import logging
+
 # ==========================================================
 # Imports
 # ==========================================================
@@ -20,10 +22,7 @@ from app.engines.career_intelligence.recommendation_engine import (
     RecommendationEngine
 )
 
-# Report Generator (سنستخدمه لاحقًا)
-from app.engines.career_intelligence.report_generator import (
-    ReportGenerator
-)
+logger = logging.getLogger(__name__)
 
 
 # ==========================================================
@@ -59,12 +58,6 @@ class CareerPipeline:
 
         self.recommendation_engine = RecommendationEngine()
 
-        # -----------------------------------------
-        # Report Generator
-        # -----------------------------------------
-
-        self.report_generator = ReportGenerator()
-
     # ======================================================
     # Run Complete Pipeline
     # ======================================================
@@ -75,82 +68,82 @@ class CareerPipeline:
         job_description: str
     ) -> dict:
 
-        print("\n========== Career Pipeline ==========")
+        logger.info("Starting career pipeline")
 
         # ==================================================
         # STEP 1
         # Extract CV Skills
         # ==================================================
 
-        print("\n[1] Extracting CV Skills...")
+        logger.info("Extracting CV skills")
 
         cv_skills = self.skill_extractor(cv_text)
 
-        print(f"Found {len(cv_skills)} skills")
-        print(cv_skills)
+        logger.debug("Found %d CV skills", len(cv_skills))
 
         # ==================================================
         # STEP 2
         # Extract Job Skills
         # ==================================================
 
-        print("\n[2] Extracting Job Skills...")
+        logger.info("Extracting job skills")
 
         job_skills = self.job_parser(job_description)
 
-        print(f"Found {len(job_skills)} job skills")
-        print(job_skills)
+        logger.debug("Found %d job skills", len(job_skills))
 
         # ==================================================
         # STEP 3
         # Match Engine
         # ==================================================
 
-        print("\n[3] Calculating Match Score...")
+        logger.info("Calculating match score")
 
         matched_skills, missing_skills, match_score = self.match_engine(
             cv_skills,
             job_skills
         )
 
-        print("Match Finished")
-
-        print(f"Matched Skills : {len(matched_skills)}")
-        print(f"Missing Skills : {len(missing_skills)}")
-        print(f"Match Score    : {match_score}")
+        logger.info(
+            "Match complete: matched=%d, missing=%d, score=%s",
+            len(matched_skills),
+            len(missing_skills),
+            match_score,
+        )
 
         # ==================================================
         # STEP 4
         # ATS Engine
         # ==================================================
 
-        print("\n[4] ATS Engine")
+        logger.info("Running ATS analysis")
 
         ats_result = self.ats_engine(
-            cv_text
+            cv_text,
+            job_skills=job_skills
         )
 
-        print("ATS Analysis Finished")
+        logger.info("ATS analysis complete")
 
         # ==================================================
         # STEP 5
         # Recommendation Engine
         # ==================================================
 
-        print("\n[5] Recommendation Engine")
+        logger.info("Generating recommendations")
 
         recommendations = self.recommendation_engine.generate(
             missing_skills
         )
 
-        print("Recommendation Finished")
+        logger.info("Recommendations complete")
 
         # ==================================================
         # STEP 6
         # Final Report
         # ==================================================
 
-        print("\n[6] Building Report...")
+        logger.info("Building final report")
 
         report = {
 
@@ -170,6 +163,6 @@ class CareerPipeline:
 
         }
 
-        print("\nPipeline Finished Successfully")
+        logger.info("Career pipeline finished successfully")
 
         return report

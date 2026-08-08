@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let analysisResult = null;
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
     // --- Demo Data ---
     const getDemoData = () => ({
         "cv_skills": ["Python", "SQL", "Data Analysis", "Communication", "Excel"],
@@ -25,6 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
         "missing_skills": ["Machine Learning", "Cloud Computing", "Leadership"],
         "match_score": 68,
         "ats_score": 81,
+        "ats_details": {
+            "skill_score": 8.5,
+            "keyword_score": 6.8,
+            "section_score": 10.0,
+            "experience_score": 7.2,
+            "project_score": 6.5,
+            "certification_score": 4.0,
+            "resume_length_score": 8.0
+        },
         "recommended_courses": [
             {"skill": "Machine Learning", "course": "Machine Learning Specialization", "provider": "Coursera"},
             {"skill": "Cloud Computing", "course": "AWS Cloud Practitioner Essentials", "provider": "AWS Training"},
@@ -55,7 +66,19 @@ document.addEventListener('DOMContentLoaded', () => {
     cvFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            fileNameDisplay.textContent = `Selected: ${file.name}`;
+            if (file.type !== 'application/pdf') {
+                showError('Please upload a PDF file.');
+                cvFileInput.value = '';
+                fileNameDisplay.textContent = '';
+                return;
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                showError('File size exceeds 10MB limit.');
+                cvFileInput.value = '';
+                fileNameDisplay.textContent = '';
+                return;
+            }
+            fileNameDisplay.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
         } else {
             fileNameDisplay.textContent = '';
         }
@@ -77,49 +100,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Analysis Logic ---
     analyzeBtn.addEventListener('click', async () => {
         const isDemo = demoModeToggle.checked;
-        const apiUrl = apiUrlInput.value;
+        const apiUrl = apiUrlInput.value.trim();
         const cvFile = cvFileInput.files[0];
         const jobDesc = jobDescriptionInput.value.trim();
 
-        if (!isDemo && !cvFile && !jobDesc) {
-            showError("Please upload a CV or paste a job description.");
-            return;
+        if (!isDemo) {
+            if (!cvFile) {
+                showError('Please upload a CV PDF.');
+                return;
+            }
+            if (!jobDesc) {
+                showError('Please paste a job description.');
+                return;
+            }
+            if (!apiUrl) {
+                showError('Please enter a backend endpoint URL.');
+                return;
+            }
         }
 
-        // Reset UI
         hideError();
-        resultsSection.style.display = 'none';
-        emptyState.style.display = 'none';
         loader.style.display = 'block';
+        analyzeBtn.disabled = true;
 
         try {
             if (isDemo) {
-                // Simulate delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await new Promise(resolve => setTimeout(resolve, 1200));
                 renderResults(getDemoData());
             } else {
-                const formData = new FormData();
-                if (cvFile) formData.append('file', cvFile);
-                formData.append('job_description', jobDesc);
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Server returned ${response.status}: ${errorText.substring(0, 100)}`);
-                }
-
-                const data = await response.json();
+                const data = await fetchWithRetry(apiUrl, cvFile, jobDesc);
                 renderResults(data);
             }
         } catch (err) {
-            showError(`Analysis failed: ${err.message}`);
+            showError(getUserFriendlyError(err));
             emptyState.style.display = 'block';
+            resultsSection.style.display = 'none';
         } finally {
             loader.style.display = 'none';
+            analyzeBtn.disabled = false;
         }
     });
 
@@ -130,21 +148,72 @@ document.addEventListener('DOMContentLoaded', () => {
         analysisResult = null;
     });
 
-    // --- Rendering Helpers ---
+    // --- Network ---
+    async function fetchWithRetry(url, file, jobDesc, retries = 2) {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                return await fetchWithTimeout(url, file, jobDesc);
+            } catch (err) {
+                if (attempt === retries) throw err;
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            }
+        }
+    }
+
+    function fetchWithTimeout(url, file, jobDesc, timeout = 60000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('job_description', jobDesc);
+
+        return fetch(url, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        }).then(async (response) => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                let errorText = '';
+                try {
+                    const errJson = await response.json();
+                    errorText = errJson.detail || JSON.stringify(errJson);
+                } catch {
+                    errorText = await response.text();
+                }
+                throw new Error(`Server error (${response.status}): ${errorText}`);
+            }
+            return response.json();
+        }).catch(err => {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                throw new Error('Request timed out. The backend is taking too long to respond.');
+            }
+            throw err;
+        });
+    }
+
+    // --- Rendering ---
     function renderResults(data) {
         analysisResult = data;
         resultsSection.style.display = 'block';
         clearResultsBtn.style.display = 'block';
 
         // Overview
-        document.getElementById('matchScoreVal').textContent = `${Math.round(data.match_score)}%`;
-        document.getElementById('matchScoreFill').style.width = `${data.match_score}%`;
+        const matchScore = Number(data.match_score) || 0;
+        const atsScore = Number(data.ats_score) || 0;
+
+        document.getElementById('matchScoreVal').textContent = `${Math.round(matchScore)}%`;
+        setProgressColor('matchScoreFill', matchScore);
+        document.getElementById('matchScoreFill').style.width = `${Math.min(matchScore, 100)}%`;
         
-        document.getElementById('atsScoreVal').textContent = `${Math.round(data.ats_score)}%`;
-        document.getElementById('atsScoreFill').style.width = `${data.ats_score}%`;
+        document.getElementById('atsScoreVal').textContent = `${Math.round(atsScore)}%`;
+        setProgressColor('atsScoreFill', atsScore);
+        document.getElementById('atsScoreFill').style.width = `${Math.min(atsScore, 100)}%`;
         
-        document.getElementById('matchedSkillsCount').textContent = data.matched_skills.length;
-        document.getElementById('missingSkillsCount').textContent = data.missing_skills.length;
+        document.getElementById('matchedSkillsCount').textContent = (data.matched_skills || []).length;
+        document.getElementById('missingSkillsCount').textContent = (data.missing_skills || []).length;
 
         // Skills Tags
         renderTags('matchedSkillsTags', data.matched_skills, 'tag-good');
@@ -153,6 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // All Skills Lists
         renderList('cvSkillsList', data.cv_skills);
         renderList('jobSkillsList', data.job_skills);
+
+        // ATS Details
+        renderAtsDetails(data.ats_details);
 
         // Recommended Courses
         const coursesGrid = document.getElementById('coursesGrid');
@@ -164,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.innerHTML = `
                     <h4>${course.course || 'Untitled Course'}</h4>
                     <p class="provider">${course.provider || 'Unknown Provider'}</p>
-                    <p>Builds: <strong>${course.skill}</strong></p>
+                    <p>Builds: <strong>${course.skill || 'N/A'}</strong></p>
                 `;
                 coursesGrid.appendChild(card);
             });
@@ -200,6 +272,59 @@ document.addEventListener('DOMContentLoaded', () => {
         // Lists (Feedback & Suggestions)
         renderBulletList('feedbackList', data.resume_feedback);
         renderBulletList('suggestionsList', data.suggestions);
+    }
+
+    function renderAtsDetails(details) {
+        const section = document.getElementById('atsDetailsSection');
+        const grid = document.getElementById('atsDetailsGrid');
+        grid.innerHTML = '';
+
+        if (!details) {
+            section.style.display = 'none';
+            return;
+        }
+
+        const items = [
+            { label: 'Skill score', value: details.skill_score },
+            { label: 'Keyword score', value: details.keyword_score },
+            { label: 'Section score', value: details.section_score },
+            { label: 'Experience score', value: details.experience_score },
+            { label: 'Project score', value: details.project_score },
+            { label: 'Certification score', value: details.certification_score },
+            { label: 'Resume length score', value: details.resume_length_score },
+        ];
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'ats-detail-card';
+            const score = Number(item.value) || 0;
+            const colorClass = getScoreColorClass(score);
+            card.innerHTML = `
+                <span class="ats-detail-label">${item.label}</span>
+                <span class="ats-detail-value ${colorClass}">${score.toFixed(1)}</span>
+            `;
+            grid.appendChild(card);
+        });
+
+        section.style.display = 'block';
+    }
+
+    function setProgressColor(elementId, score) {
+        const el = document.getElementById(elementId);
+        const numScore = Number(score) || 0;
+        if (numScore >= 80) {
+            el.style.backgroundColor = '#28a745';
+        } else if (numScore >= 60) {
+            el.style.backgroundColor = '#ffc107';
+        } else {
+            el.style.backgroundColor = '#dc3545';
+        }
+    }
+
+    function getScoreColorClass(score) {
+        if (score >= 8) return 'score-high';
+        if (score >= 6) return 'score-medium';
+        return 'score-low';
     }
 
     function renderTags(containerId, items, className) {
@@ -243,6 +368,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             container.innerHTML = '<li class="help-text">Nothing to show yet.</li>';
         }
+    }
+
+    function getUserFriendlyError(err) {
+        const msg = err.message || 'An unknown error occurred.';
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+            return 'Cannot reach the backend. Please check the endpoint URL and ensure the server is running.';
+        }
+        if (msg.includes('timeout') || msg.includes('timed out')) {
+            return 'The request timed out. Please try again.';
+        }
+        if (msg.includes('400')) {
+            return 'Invalid request. Please check your inputs and try again.';
+        }
+        if (msg.includes('413')) {
+            return 'The uploaded file is too large. Please use a file under 10MB.';
+        }
+        if (msg.includes('415')) {
+            return 'Unsupported file type. Please upload a PDF.';
+        }
+        if (msg.includes('500')) {
+            return 'The server encountered an error. Please try again later.';
+        }
+        return msg;
     }
 
     function showError(msg) {

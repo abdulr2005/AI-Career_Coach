@@ -1,4 +1,4 @@
-from app.engines.ats.analyzers.project_boundary import is_project_title
+from app.engines.ats.analyzers.projects.project_boundary import is_project_title
 
 
 # ==========================================================

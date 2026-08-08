@@ -165,10 +165,6 @@ def remove_extra_spaces(text):
 # MAIN CLEANER
 # ==================================================
 
-# ==================================================
-# MAIN CLEANER
-# ==================================================
-
 def clean_resume(cv_text: str):
 
     text = remove_header(cv_text)

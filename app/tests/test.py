@@ -1,9 +1,9 @@
 from app.parsers.pdf_reader import extract_text_from_pdf
-from app.engines.skill_extractor import extract_skills
+from app.engines.matching.skill_extractor import extract_skills
 from app.parsers.job_parser import extract_job_skills
-from app.engines.match_engine import calculate_match
-from app.engines.course_engine import recommend_courses
-from app.engines.roadmap_engine import build_roadmap
+from app.engines.matching.match_engine import calculate_match
+from app.engines.recommendation.course_engine import recommend_courses
+from app.engines.recommendation.roadmap_engine import build_roadmap
 
 
 def main():

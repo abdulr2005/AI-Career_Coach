@@ -1,39 +1,6 @@
 import re
 
-SECTION_PATTERNS = {
-    "summary": [
-        "summary",
-        "profile",
-        "objective"
-    ],
-
-    "education": [
-        "education",
-        "academic"
-    ],
-
-    "experience": [
-        "experience",
-        "work experience",
-        "employment"
-    ],
-
-    "projects": [
-        "projects",
-        "project"
-    ],
-
-    "skills": [
-        "skills",
-        "technical skills"
-    ],
-
-    "certifications": [
-        "certifications",
-        "certificates",
-        "licenses"
-    ]
-}
+from app.data.resume_patterns import SECTION_PATTERNS
 
 
 def parse_resume_sections(cv_text):

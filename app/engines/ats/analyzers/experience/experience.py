@@ -1,5 +1,7 @@
 import re
 
+from app.data.skills_db import TECHNICAL_KEYWORDS
+
 
 # ==================================================
 # ACTION VERBS
@@ -60,52 +62,6 @@ INTERNSHIP_WORDS = [
 
 
 # ==================================================
-# TECH STACK
-# ==================================================
-
-TECH_KEYWORDS = [
-
-    "python",
-    "sql",
-    "tensorflow",
-    "pytorch",
-    "scikit-learn",
-    "pandas",
-    "numpy",
-    "opencv",
-    "cnn",
-    "computer vision",
-    "nlp",
-    "fastapi",
-    "flask",
-    "streamlit",
-    "docker",
-    "git",
-    "github",
-    "aws",
-    "azure",
-    "java",
-    "c++",
-    "javascript",
-    "react",
-    "node.js",
-    "mongodb",
-    "mysql",
-    "postgresql",
-    "xgboost",
-    "random forest",
-    "pca",
-    "power bi",
-    "tableau",
-    "excel",
-    "iot",
-    "machine learning",
-    "deep learning"
-
-]
-
-
-# ==================================================
 # EXTRACT TECHNOLOGIES
 # ==================================================
 
@@ -117,7 +73,7 @@ def extract_technologies(text):
 
         tech
 
-        for tech in TECH_KEYWORDS
+        for tech in TECHNICAL_KEYWORDS
 
         if tech in lower
 

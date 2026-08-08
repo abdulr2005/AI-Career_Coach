@@ -30,7 +30,7 @@ def build_scores(
 
     certifications_score = min(
         10,
-        certifications.get("count", 0) * 2
+        certifications.get("total_certifications", 0) * 2
     )
 
     # ------------------------------------------------------

@@ -569,3 +569,39 @@ textarea {
         padding: 1.5rem;
     }
 }
+
+/* ATS Details */
+.ats-details-section {
+    margin-bottom: 2rem;
+}
+
+.ats-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.ats-detail-card {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ats-detail-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.ats-detail-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.score-high { color: #155724; }
+.score-medium { color: #856404; }
+.score-low { color: #721c24; }

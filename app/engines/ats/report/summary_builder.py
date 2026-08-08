@@ -78,7 +78,7 @@ def build_summary(
     # Certifications
     # ------------------------------------------------------
 
-    if certifications.get("count", 0) == 0:
+    if certifications.get("total_certifications", 0) == 0:
 
         recommendations.append(
             "Consider adding professional certifications."

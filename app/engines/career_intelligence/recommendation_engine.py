@@ -5,6 +5,8 @@ This module combines all recommendation engines
 into one interface for the Career Pipeline.
 """
 
+import logging
+
 # ==========================================================
 # Imports
 # ==========================================================
@@ -12,6 +14,8 @@ into one interface for the Career Pipeline.
 from app.engines.recommendation.course_engine import recommend_courses
 from app.engines.recommendation.roadmap_engine import build_roadmap
 from app.engines.recommendation.suggestion_engine import generate_suggestions
+
+logger = logging.getLogger(__name__)
 
 
 # ==========================================================
@@ -25,7 +29,7 @@ class RecommendationEngine:
 
     def generate(self, missing_skills):
 
-        print("\nGenerating Recommendations...")
+        logger.info("Generating recommendations")
 
         # ------------------------------------------
         # Courses
@@ -35,7 +39,7 @@ class RecommendationEngine:
             missing_skills
         )
 
-        print("Courses Generated")
+        logger.info("Courses generated")
 
         # ------------------------------------------
         # Roadmap
@@ -45,7 +49,7 @@ class RecommendationEngine:
             missing_skills
         )
 
-        print("Roadmap Generated")
+        logger.info("Roadmap generated")
 
         # ------------------------------------------
         # Suggestions
@@ -55,7 +59,7 @@ class RecommendationEngine:
             missing_skills
         )
 
-        print("Suggestions Generated")
+        logger.info("Suggestions generated")
 
         return {
 

@@ -1,49 +1,11 @@
 import re
 
+from app.data.skills_db import TECHNICAL_KEYWORDS
+
 
 # ==================================================
 # TECHNOLOGY KEYWORDS
 # ==================================================
-
-TECH_KEYWORDS = [
-
-    "python",
-    "sql",
-    "java",
-    "c++",
-    "javascript",
-    "react",
-    "node",
-    "fastapi",
-    "flask",
-    "streamlit",
-    "tensorflow",
-    "pytorch",
-    "scikit-learn",
-    "opencv",
-    "pandas",
-    "numpy",
-    "power bi",
-    "tableau",
-    "excel",
-    "docker",
-    "aws",
-    "azure",
-    "git",
-    "github",
-    "machine learning",
-    "deep learning",
-    "computer vision",
-    "nlp",
-    "cnn",
-    "xgboost",
-    "random forest",
-    "iot",
-    "mongodb",
-    "mysql",
-    "postgresql"
-
-]
 
 
 # ==================================================
@@ -72,7 +34,7 @@ def extract_technologies(text):
 
     found = []
 
-    for tech in TECH_KEYWORDS:
+    for tech in TECHNICAL_KEYWORDS:
 
         if tech in lower:
             found.append(tech)

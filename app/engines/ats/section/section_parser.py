@@ -1,3 +1,5 @@
+import logging
+
 from app.engines.ats.section.section_utils import (
     split_resume,
     clean_lines
@@ -6,6 +8,8 @@ from app.engines.ats.section.section_utils import (
 from app.engines.ats.section.section_matcher import (
     match_section
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ==========================================
@@ -26,13 +30,9 @@ def parse_resume_sections(text: str):
 
     for line in lines:
 
-        print(f"Checking Line: {line}")
-
         section = match_section(line)
 
         if section:
-
-            print(f"Matched Section -> {section}")
 
             current_section = section
 

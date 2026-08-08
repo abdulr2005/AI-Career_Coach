@@ -3,7 +3,7 @@ from app.parsers.pdf_reader import extract_text_from_pdf
 from app.engines.ats.section.resume_cleaner import clean_resume
 from app.engines.ats.section.section_parser import parse_resume_sections
 
-from app.engines.ats.analyzers.project_splitter import split_projects
+from app.engines.ats.analyzers.projects.project_splitter import split_projects
 
 
 def main():
